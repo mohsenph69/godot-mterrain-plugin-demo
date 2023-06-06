@@ -1,0 +1,42 @@
+[gd_scene load_steps=8 format=3 uid="uid://bob5bekhruelj"]
+
+[ext_resource type="Script" path="res://MTerrain.gd" id="1_6w82v"]
+[ext_resource type="Script" path="res://free_look_camera.gd" id="1_65a37"]
+[ext_resource type="Material" uid="uid://nwreip4ma8t4" path="res://material/m_terrain.materila.tres" id="1_d5f2a"]
+[ext_resource type="Texture2D" uid="uid://djis6uurdvrmf" path="res://asset/belfast_sunset_puresky_4k.exr" id="4_xtdfy"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_e6bbl"]
+panorama = ExtResource("4_xtdfy")
+
+[sub_resource type="Sky" id="Sky_l6yk1"]
+sky_material = SubResource("PanoramaSkyMaterial_e6bbl")
+
+[sub_resource type="Environment" id="Environment_7rn1e"]
+background_mode = 2
+sky = SubResource("Sky_l6yk1")
+ambient_light_sky_contribution = 0.93
+sdfgi_enabled = true
+sdfgi_min_cell_size = 0.585938
+sdfgi_energy = 0.594
+sdfgi_normal_bias = 8.0
+sdfgi_probe_bias = 8.0
+fog_density = 0.0005
+fog_sky_affect = 0.384
+
+[node name="world" type="Node3D"]
+
+[node name="MTerrain" type="MTerrain" parent="."]
+material = ExtResource("1_d5f2a")
+terrain_size = Vector2i(256, 256)
+offset = Vector3(-4000, 0, -4000)
+max_range = 256
+size_info = [[true, true, true, true, true, true], [false, true, true, false, true, true], [false, false, false, false, true, true], [false, false, false, false, true, true], [false, false, false, false, false, true], [false, false, false, false, false, true]]
+lod_distance = PackedInt32Array(5, 10, 20, 21, 40)
+script = ExtResource("1_6w82v")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.697827, 1.09175)
+script = ExtResource("1_65a37")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_7rn1e")

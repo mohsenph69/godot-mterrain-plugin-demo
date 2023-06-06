@@ -1,0 +1,8 @@
+[configuration]
+
+entry_symbol = "test_library_init"
+
+[libraries]
+
+linux.debug.x86_64 = "res://addons/m_terrain/libs/libMTerrain.linux.template_debug.x86_64.so"
+

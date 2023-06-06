@@ -1,0 +1,47 @@
+[gd_resource type="ShaderMaterial" load_steps=21 format=3 uid="uid://nwreip4ma8t4"]
+
+[ext_resource type="Shader" path="res://material/terrain_mat.gdshader" id="1_7jpbq"]
+[ext_resource type="Texture2D" uid="uid://5wyo5hxb5yk2" path="res://hf/normalmap.png" id="2_tdk3j"]
+[ext_resource type="Texture2D" uid="uid://dekqvwj3un1ps" path="res://hf/heightmap.exr" id="3_jbopp"]
+[ext_resource type="Texture2D" uid="uid://c4pa2b4cpiswy" path="res://hf/splatmap.png" id="4_lrkba"]
+[ext_resource type="Texture2D" uid="uid://dl60dxfabvh0" path="res://asset/037/Ground037_1K_Color.jpg" id="5_stm26"]
+[ext_resource type="Texture2D" uid="uid://c1513n335aou" path="res://asset/037/Ground037_1K_AmbientOcclusion.jpg" id="6_u6jui"]
+[ext_resource type="Texture2D" uid="uid://3hbdvnmtt0hj" path="res://asset/037/Ground037_1K_NormalGL.jpg" id="7_2kdcn"]
+[ext_resource type="Texture2D" uid="uid://o8wowltsx0u4" path="res://asset/037/Ground037_1K_Roughness.jpg" id="8_ss3ne"]
+[ext_resource type="Texture2D" uid="uid://d35454uhwc27x" path="res://asset/rock16/Rock016_1K_Color.jpg" id="9_ydqqu"]
+[ext_resource type="Texture2D" uid="uid://dihlv00vy1c7m" path="res://asset/rock16/Rock016_1K_AmbientOcclusion.jpg" id="10_6vnff"]
+[ext_resource type="Texture2D" uid="uid://xsobf6bfit5w" path="res://asset/rock16/Rock016_1K_NormalGL.jpg" id="11_vau0s"]
+[ext_resource type="Texture2D" uid="uid://coy0xwtgnc1uj" path="res://asset/rock16/Rock016_1K_Roughness.jpg" id="12_s6v75"]
+[ext_resource type="Texture2D" uid="uid://jmcs3i20g8bf" path="res://asset/033/Ground033_1K_Color.jpg" id="13_cqta8"]
+[ext_resource type="Texture2D" uid="uid://bgjtd2gbeito8" path="res://asset/033/Ground033_1K_AmbientOcclusion.jpg" id="14_wfyc3"]
+[ext_resource type="Texture2D" uid="uid://dvs2yvgtbxo42" path="res://asset/033/Ground033_1K_NormalGL.jpg" id="15_tvnth"]
+[ext_resource type="Texture2D" uid="uid://dhu11fb40tfig" path="res://asset/033/Ground033_1K_Roughness.jpg" id="16_h6qcf"]
+[ext_resource type="Texture2D" uid="uid://b15mbt3c0w08e" path="res://asset/ground049/Ground049C_1K_Color.jpg" id="17_kpctr"]
+[ext_resource type="Texture2D" uid="uid://bkm15ku70i848" path="res://asset/ground049/Ground049C_1K_AmbientOcclusion.jpg" id="18_2c2kg"]
+[ext_resource type="Texture2D" uid="uid://dnga1ey26svpi" path="res://asset/ground049/Ground049C_1K_NormalGL.jpg" id="19_sk5w6"]
+[ext_resource type="Texture2D" uid="uid://cf3rqyeses1pj" path="res://asset/ground049/Ground049C_1K_Roughness.jpg" id="20_8je52"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_7jpbq")
+shader_parameter/height_scale = 2600.0
+shader_parameter/terrain_offset = Vector3(4000, 0, 4000)
+shader_parameter/heightmap_tex = ExtResource("3_jbopp")
+shader_parameter/heightmap_normal_tex = ExtResource("2_tdk3j")
+shader_parameter/splatmap_tex = ExtResource("4_lrkba")
+shader_parameter/tex0_albedo = ExtResource("5_stm26")
+shader_parameter/tex0_normalmap = ExtResource("7_2kdcn")
+shader_parameter/tex0_roughness = ExtResource("8_ss3ne")
+shader_parameter/tex0_ao = ExtResource("6_u6jui")
+shader_parameter/tex1_albedo = ExtResource("9_ydqqu")
+shader_parameter/tex1_normalmap = ExtResource("11_vau0s")
+shader_parameter/tex1_roughness = ExtResource("12_s6v75")
+shader_parameter/tex1_ao = ExtResource("10_6vnff")
+shader_parameter/tex2_albedo = ExtResource("13_cqta8")
+shader_parameter/tex2_normalmap = ExtResource("15_tvnth")
+shader_parameter/tex2_roughness = ExtResource("16_h6qcf")
+shader_parameter/tex2_ao = ExtResource("14_wfyc3")
+shader_parameter/tex3_albedo = ExtResource("17_kpctr")
+shader_parameter/tex3_normalmap = ExtResource("19_sk5w6")
+shader_parameter/tex3_roughness = ExtResource("20_8je52")
+shader_parameter/tex3_ao = ExtResource("18_2c2kg")
