@@ -50,7 +50,6 @@ void vertex(){
 void fragment() {
 	vec3 n = texture(heightmap_normal_tex, terrain_uv).xzy;
 	n = n*2.0 - 1.0;
-	n.z *= -1.0;
 	mat3 t = mat3(TANGENT, NORMAL, BINORMAL);
 	NORMAL = t*n;
 	vec3 splatmap = texture(splatmap_tex, terrain_uv).rgb;
