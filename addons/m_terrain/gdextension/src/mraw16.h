@@ -7,6 +7,8 @@
 #include <godot_cpp/classes/texture.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include "mconfig.h"
 
 using namespace godot;
 
@@ -21,8 +23,8 @@ protected:
 public:
     MRaw16();
     ~MRaw16();
-    static Ref<Image> get_texture(const String& file_path);
-
+    static Ref<Image> get_image(const String& file_path, const uint64_t& width, const uint64_t& height);
+    static Ref<ImageTexture> get_texture(const String& file_path, const uint64_t& width, const uint64_t& height);
 };
 
 

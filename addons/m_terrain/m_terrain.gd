@@ -1,30 +1,20 @@
 @tool
 extends EditorPlugin
 
-var terrain:MTerrain
-var is_cam_set = false
+var raw_img_importer = null
+var raw_tex_importer = null
 
 func _enter_tree():
-	# Initialization of the plugin goes here.
-	pass
+	raw_img_importer = load("res://addons/m_terrain/importer/raw16_img.gd").new()
+	raw_tex_importer = load("res://addons/m_terrain/importer/raw16_tex.gd").new()
+	add_import_plugin(raw_img_importer)
+	add_import_plugin(raw_tex_importer)
 
 
 func _exit_tree():
-	# Clean-up of the plugin goes here.
-	pass
+	remove_import_plugin(raw_img_importer)
+	remove_import_plugin(raw_tex_importer)
+	raw_img_importer = null
+	raw_img_importer = null
 
 
-func _forward_3d_gui_input(viewport_camera, event):
-	if terrain and not is_cam_set:
-		terrain.set_editor_camera(viewport_camera)
-		terrain.editor_cam = viewport_camera
-		is_cam_set = true
-		print("Viewport camera is set")
-
-
-func _handles(object):
-	if object.has_method("set_editor_camera"):
-		terrain = object
-		print("done")
-		return true
-	return false

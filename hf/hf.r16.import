@@ -1,0 +1,16 @@
+[remap]
+
+importer="mterrain.raw16.tex"
+type="ImageTexture"
+uid="uid://dp8txnadlkms0"
+path="res://.godot/imported/hf.r16-6f18ddb2d09b5cb748135822a98e434a.res"
+
+[deps]
+
+source_file="res://hf/hf.r16"
+dest_files=["res://.godot/imported/hf.r16-6f18ddb2d09b5cb748135822a98e434a.res"]
+
+[params]
+
+width=0
+height=0

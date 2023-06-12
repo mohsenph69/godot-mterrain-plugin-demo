@@ -2,7 +2,7 @@
 
 [ext_resource type="Shader" path="res://material/terrain_mat.gdshader" id="1_7jpbq"]
 [ext_resource type="Texture2D" uid="uid://5wyo5hxb5yk2" path="res://hf/normalmap.png" id="2_tdk3j"]
-[ext_resource type="Texture2D" uid="uid://dekqvwj3un1ps" path="res://hf/heightmap.exr" id="3_jbopp"]
+[ext_resource type="Texture2D" uid="uid://dp8txnadlkms0" path="res://hf/hf.r16" id="3_knm8f"]
 [ext_resource type="Texture2D" uid="uid://c4pa2b4cpiswy" path="res://hf/splatmap.png" id="4_lrkba"]
 [ext_resource type="Texture2D" uid="uid://dl60dxfabvh0" path="res://asset/037/Ground037_1K_Color.jpg" id="5_stm26"]
 [ext_resource type="Texture2D" uid="uid://c1513n335aou" path="res://asset/037/Ground037_1K_AmbientOcclusion.jpg" id="6_u6jui"]
@@ -26,7 +26,7 @@ render_priority = 0
 shader = ExtResource("1_7jpbq")
 shader_parameter/height_scale = 2600.0
 shader_parameter/terrain_offset = Vector3(4000, 0, 4000)
-shader_parameter/heightmap_tex = ExtResource("3_jbopp")
+shader_parameter/heightmap_tex = ExtResource("3_knm8f")
 shader_parameter/heightmap_normal_tex = ExtResource("2_tdk3j")
 shader_parameter/splatmap_tex = ExtResource("4_lrkba")
 shader_parameter/tex0_albedo = ExtResource("5_stm26")
