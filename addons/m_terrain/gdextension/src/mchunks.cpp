@@ -79,6 +79,7 @@ MChunks::~MChunks(){
 
 void MChunks::create_chunks(int32_t _min_size, int32_t _max_size, real_t _min_h_scale, real_t _max_h_scale, Array info) {
     base_size_meter = _min_size;
+    h_scale = _min_h_scale;
     int8_t size = 0;
     for(int32_t size_meter=_min_size;size_meter<=_max_size;size_meter*=2){
         int8_t lod = 0;

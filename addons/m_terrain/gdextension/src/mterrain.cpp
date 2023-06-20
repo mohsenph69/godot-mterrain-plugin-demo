@@ -6,21 +6,27 @@
 #include <godot_cpp/classes/engine.hpp>
 
 
+
 void MTerrain::_bind_methods() {
     ClassDB::bind_method(D_METHOD("finish_terrain"), &MTerrain::finish_terrain);
     ClassDB::bind_method(D_METHOD("start"), &MTerrain::start);
     ClassDB::bind_method(D_METHOD("update"), &MTerrain::update);
+    ClassDB::bind_method(D_METHOD("update_uniforms"), &MTerrain::update_uniforms);
     ClassDB::bind_method(D_METHOD("get_update_remove_chunks"), &MTerrain::get_update_remove_chunks);
 
     ClassDB::bind_method(D_METHOD("get_material"), &MTerrain::get_material);
     ClassDB::bind_method(D_METHOD("set_material", "terrain_material"), &MTerrain::set_material);
-    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,BaseMaterial3D"), "set_material", "get_material");
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial"), "set_material", "get_material");
     ClassDB::bind_method(D_METHOD("get_terrain_size"), &MTerrain::get_terrain_size);
     ClassDB::bind_method(D_METHOD("set_terrain_size", "size"), &MTerrain::set_terrain_size);
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I,"terrain_size"), "set_terrain_size", "get_terrain_size");
     ClassDB::bind_method(D_METHOD("set_offset", "offset"), &MTerrain::set_offset);
     ClassDB::bind_method(D_METHOD("get_offset"), &MTerrain::get_offset);
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "offset"), "set_offset", "get_offset");
+
+    ClassDB::bind_method(D_METHOD("set_region_size", "region_size"), &MTerrain::set_region_size);
+    ClassDB::bind_method(D_METHOD("get_region_size"), &MTerrain::get_region_size);
+    ADD_PROPERTY(PropertyInfo(Variant::INT,"region_size"), "set_region_size", "get_region_size");
     
     
     ClassDB::bind_method(D_METHOD("set_max_range", "max_range"), &MTerrain::set_max_range);
@@ -53,11 +59,15 @@ void MTerrain::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_lod_distance", "lod_distance"), &MTerrain::set_lod_distance);
     ClassDB::bind_method(D_METHOD("get_lod_distance"), &MTerrain::get_lod_distance);
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_INT32_ARRAY, "lod_distance",PROPERTY_HINT_NONE,"", PROPERTY_USAGE_STORAGE),"set_lod_distance","get_lod_distance");
+
+    ClassDB::bind_method(D_METHOD("set_uniforms", "uniforms"), &MTerrain::set_uniforms);
+    ClassDB::bind_method(D_METHOD("get_uniforms"), &MTerrain::get_uniforms);
+    ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY,"uniforms",PROPERTY_HINT_NONE,"",PROPERTY_USAGE_STORAGE), "set_uniforms", "get_uniforms");
 }
 
 MTerrain::MTerrain() {
     //connect("ready", Callable(this, "start"));
-    //connect("tree_exiting", Callable(this, "finish_terrain"));
+    connect("tree_exiting", Callable(this, "finish_terrain"));
     recalculate_terrain_config(true);
     grid = memnew(MGrid);
     update_timer = memnew(Timer);
@@ -73,7 +83,9 @@ MTerrain::~MTerrain() {
 
 
 void MTerrain::finish_terrain() {
-
+    if(update_thread_future.valid()){
+        update_thread_future.wait();
+    }
 }
 
 void MTerrain::start() {
@@ -95,11 +107,13 @@ void MTerrain::create_grid(){
     _chunks->create_chunks(size_list[min_size_index],size_list[max_size_index],h_scale_list[min_h_scale_index],h_scale_list[max_h_scale_index],size_info);
     grid->set_scenario(get_world_3d()->get_scenario());
     grid->offset = offset;
+    grid->region_size = region_size;
     if(material.is_valid()){
-        grid->set_material(material->get_rid());
+        grid->set_material(material);
     }
     grid->lod_distance = lod_distance;
     grid->create(terrain_size.x,terrain_size.y,_chunks);
+    grid->update_regions_uniforms(uniforms);
     get_update_remove_chunks();
     grid->update_meshes();
     continue_update();
@@ -113,7 +127,6 @@ void MTerrain::update() {
         get_cam_pos();
         update_thread_future = std::async(std::launch::async, &MTerrain::get_update_remove_chunks, this);
     }
-    
 }
 
 void MTerrain::stop_update() {
@@ -155,21 +168,17 @@ void MTerrain::get_cam_pos() {
 
 
 
-Ref<Material> MTerrain::get_material(){
+Ref<ShaderMaterial> MTerrain::get_material(){
     return material;
 }
 
-void MTerrain::set_material(Ref<Material> m){
+void MTerrain::set_material(Ref<ShaderMaterial> m){
     material = m;
     if(!grid->is_created()){
         return;
     }
     stop_update();
-    if(m.is_valid()){
-        grid->set_material(material->get_rid());
-    } else {
-         grid->set_material(RID());
-    }
+    grid->set_material(material);
     continue_update();
 }
 
@@ -225,6 +234,47 @@ Vector3 MTerrain::get_offset(){
 }
 
 
+void MTerrain::set_region_size(int32_t input) {
+    region_size = input;
+}
+
+int32_t MTerrain::get_region_size() {
+    return region_size;
+}
+
+void MTerrain::update_uniforms() {
+    if(!material.is_valid() || material->get_class() != "ShaderMaterial"){
+        return;
+    }
+    Ref<ShaderMaterial> mat = material;
+    Ref<Shader> shader = mat->get_shader();
+    Array uniforms_arr = shader->get_shader_uniform_list();
+    Dictionary update_uniform;
+    UtilityFunctions::print("uniforms ", uniforms );
+    for(int i=0;i<uniforms_arr.size();i++){
+        Dictionary u = uniforms_arr[i];
+        String name = u["name"];
+        if(name.begins_with("mterrain_0_") || name.begins_with("mterrain_1_")){
+            StringName path = "";
+            if(uniforms.has(name)){
+                path = uniforms[name];
+            }
+            update_uniform[name] = path;
+        }
+    }
+    uniforms.clear();
+    uniforms = update_uniform;
+    notify_property_list_changed();
+}
+
+void MTerrain::set_uniforms(Dictionary input) {
+    uniforms = input;
+}
+
+Dictionary MTerrain::get_uniforms() {
+    return uniforms;
+}
+
 void MTerrain::recalculate_terrain_config(const bool& force_calculate) {
     if(!is_inside_tree() && !force_calculate){
         return;
@@ -265,6 +315,8 @@ void MTerrain::recalculate_terrain_config(const bool& force_calculate) {
     }
     notify_property_list_changed();
 }
+
+
 
 
 
@@ -333,6 +385,13 @@ PackedInt32Array MTerrain::get_lod_distance() {
 }
 
 void MTerrain::_get_property_list(List<PropertyInfo> *p_list) const {
+    // uniforms /////
+    Array keys = uniforms.keys();
+    for(int i=0; i<keys.size();i++){
+        String prop_name = keys[i];
+        PropertyInfo p(Variant::STRING_NAME,prop_name,PROPERTY_HINT_FILE,"",PROPERTY_USAGE_EDITOR);
+        p_list->push_back(p);
+    }
     //Adding lod distance property
     PropertyInfo sub_lod(Variant::INT, "LOD distance", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SUBGROUP);
     p_list->push_back(sub_lod);
@@ -353,6 +412,13 @@ void MTerrain::_get_property_list(List<PropertyInfo> *p_list) const {
 }
 
 bool MTerrain::_get(const StringName &p_name, Variant &r_ret) const {
+    if(p_name.begins_with("mterrain_1_") || p_name.begins_with("mterrain_0_")){
+        if(uniforms.has(p_name)){
+            r_ret = uniforms[p_name];
+            return true;
+        }
+        return false;
+    }
     if(p_name.begins_with("SIZE_")){
         PackedStringArray parts = p_name.split("_");
         if(parts.size() != 6){
@@ -374,6 +440,13 @@ bool MTerrain::_get(const StringName &p_name, Variant &r_ret) const {
 
 
 bool MTerrain::_set(const StringName &p_name, const Variant &p_value) {
+    if(p_name.begins_with("mterrain_1_") || p_name.begins_with("mterrain_0_")){
+        if(uniforms.has(p_name)){
+            uniforms[p_name] = p_value;
+            return true;
+        }
+        return false;
+    }
     if(p_name.begins_with("SIZE_")){
         PackedStringArray parts = p_name.split("_");
         if(parts.size() != 6){

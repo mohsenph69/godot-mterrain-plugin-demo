@@ -33,6 +33,10 @@ MBound::MBound(const int32_t& x,const int32_t& z){
     center.z = z;
 }
 
+Rect2i MBound::get_rect2i() {
+    Rect2i rect(left, top, right - left, bottom - top);
+    return rect;
+}
 
 void MBound::clear() {
     left = 0;
@@ -189,5 +193,36 @@ bool MBound::grow_positive(const int32_t& amount, const MBound& limit_bound) {
     if(right > limit_bound.right || bottom > limit_bound.bottom){
         return false;
     }
+    return true;
+}
+
+
+bool MBound::get_next_region(const int32_t& region_size, const MBound& limit_bound) {
+    if(cursor.z == limit_bound.bottom){
+        return false;
+    }
+    left = cursor.x;
+    top = cursor.z;
+    right = MIN(cursor.x + region_size, limit_bound.right);
+    bottom = MIN(cursor.z + region_size,limit_bound.bottom);
+    // in this case we reached at the end of row
+    if(left == right){
+        UtilityFunctions::print("next row");
+        cursor.x = 0;
+        cursor.z = bottom;
+        return get_next_region(region_size, limit_bound);
+    }
+    cursor.x = right;
+    cursor.z = top;
+    return true;
+}
+
+bool MBound::get_next_shared_edge_region(const int32_t& region_size, const MBound& limit_bound){
+    left = cursor.x;
+    top = cursor.z;
+    right = MIN(cursor.x + region_size, limit_bound.right);
+    bottom = MIN(cursor.z + region_size,limit_bound.bottom);
+    cursor.x = right - 1;
+    cursor.z = top - 1;
     return true;
 }

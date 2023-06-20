@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://bob5bekhruelj"]
+[gd_scene load_steps=15 format=3 uid="uid://bob5bekhruelj"]
 
 [ext_resource type="Script" path="res://MTerrain.gd" id="1_6w82v"]
 [ext_resource type="Script" path="res://free_look_camera.gd" id="1_65a37"]
-[ext_resource type="Material" uid="uid://nwreip4ma8t4" path="res://material/m_terrain.materila.tres" id="1_d5f2a"]
+[ext_resource type="Shader" path="res://world.gdshader" id="1_a7bgu"]
+[ext_resource type="Material" uid="uid://nwreip4ma8t4" path="res://material/m_terrain.materila.tres" id="1_gu0n0"]
 [ext_resource type="Texture2D" uid="uid://djis6uurdvrmf" path="res://asset/belfast_sunset_puresky_4k.exr" id="4_xtdfy"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_e6bbl"]
@@ -15,28 +16,101 @@ sky_material = SubResource("PanoramaSkyMaterial_e6bbl")
 background_mode = 2
 sky = SubResource("Sky_l6yk1")
 ambient_light_sky_contribution = 0.93
-sdfgi_enabled = true
 sdfgi_min_cell_size = 0.585938
+sdfgi_cascade0_distance = 37.5
+sdfgi_max_distance = 600.0
 sdfgi_energy = 0.594
 sdfgi_normal_bias = 8.0
 sdfgi_probe_bias = 8.0
 fog_density = 0.0005
 fog_sky_affect = 0.384
 
+[sub_resource type="Animation" id="Animation_8oaf3"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0.150985, 3.0004, 0.154391)]
+}
+
+[sub_resource type="Animation" id="Animation_xqkts"]
+resource_name = "cam_move"
+length = 20.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1, 18.5),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0.150985, 3.0004, 0.154391), Vector3(0.150985, 3.0004, 0.154391), Vector3(778.759, 3.0004, 479.454)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_qtiuj"]
+_data = {
+"RESET": SubResource("Animation_8oaf3"),
+"cam_move": SubResource("Animation_xqkts")
+}
+
+[sub_resource type="BoxMesh" id="BoxMesh_egpog"]
+size = Vector3(32, 1, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yvc4s"]
+render_priority = 0
+shader = ExtResource("1_a7bgu")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_epa4v"]
+size = Vector2(64, 64)
+center_offset = Vector3(32, 0, 32)
+
 [node name="world" type="Node3D"]
 
 [node name="MTerrain" type="MTerrain" parent="."]
-material = ExtResource("1_d5f2a")
+material = ExtResource("1_gu0n0")
 terrain_size = Vector2i(256, 256)
-offset = Vector3(-4000, 0, -4000)
-max_range = 256
-size_info = [[true, true, true, true, true, true], [false, true, true, false, true, true], [false, false, false, false, true, true], [false, false, false, false, true, true], [false, false, false, false, false, true], [false, false, false, false, false, true]]
-lod_distance = PackedInt32Array(5, 10, 20, 21, 40)
+region_size = 32
+max_range = 1024
+max_h_scale = 5
+size_info = [[true, true, true, true], [false, true, true, true], [false, false, true, true], [false, false, false, true], [false, false, false, true], [false, false, false, true]]
+lod_distance = PackedInt32Array(10, 16, 32)
+uniforms = {
+"mterrain_0_normalmap": &"res://hf/normalmap.png",
+"mterrain_1_heightmap": &"res://hf/hf.r16"
+}
 script = ExtResource("1_6w82v")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.697827, 1.09175)
+transform = Transform3D(-0.714949, 0.279356, -0.640944, -1.49012e-08, 0.916712, 0.399549, 0.699177, 0.285657, -0.655402, 0.150985, 3.0004, 0.154391)
+far = 90000.0
 script = ExtResource("1_65a37")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_7rn1e")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_qtiuj")
+}
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -1.499)
+mesh = SubResource("BoxMesh_egpog")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 0, 0)
+visible = false
+material_override = SubResource("ShaderMaterial_yvc4s")
+mesh = SubResource("PlaneMesh_epa4v")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.841973, 0.539521, 0, -0.539521, 0.841973, 18.009, 7.09524, 8.78376)

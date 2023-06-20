@@ -14,6 +14,8 @@
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/templates/list.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 
 
 
@@ -28,7 +30,7 @@ class MTerrain : public  Node3D {
     MChunks* _chunks;
     std::future<void> update_thread_future;
     MGrid* grid;
-    Ref<Material> material;
+    Ref<ShaderMaterial> material;
     Vector2i terrain_size = Vector2i(10,10);
     Timer* update_timer;
     Vector3 cam_pos;
@@ -46,6 +48,9 @@ class MTerrain : public  Node3D {
     Array size_info;
     int32_t max_range;
     PackedInt32Array lod_distance;
+    Dictionary uniforms;
+    int32_t region_size;
+
 
 
     protected:
@@ -63,8 +68,8 @@ class MTerrain : public  Node3D {
     void get_update_remove_chunks();
     void get_cam_pos();
 
-    Ref<Material> get_material();
-    void set_material(Ref<Material> m);
+    Ref<ShaderMaterial> get_material();
+    void set_material(Ref<ShaderMaterial> m);
 
     Vector2i get_terrain_size();
     void set_terrain_size(Vector2i size);
@@ -78,8 +83,14 @@ class MTerrain : public  Node3D {
     void set_offset(Vector3 input);
     Vector3 get_offset();
 
+    void set_region_size(int32_t input);
+    int32_t get_region_size();
+    
 
-    void recalculate_terrain_config(const bool& force_calculate);
+    void update_uniforms();
+    void set_uniforms(Dictionary input);
+    Dictionary get_uniforms();
+    void recalculate_terrain_config(const bool& force_calculate);    
     int get_min_size();
     void set_min_size(int index);
     int get_max_size();

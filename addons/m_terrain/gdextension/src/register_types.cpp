@@ -16,6 +16,7 @@
 #include "mchunk_generator.h"
 #include "mchunks.h"
 #include "mraw16.h"
+#include "mregion.h"
 
 using namespace godot;
 
@@ -27,6 +28,7 @@ void initialize_test_module(ModuleInitializationLevel p_level) {
 	ClassDB::register_class<MGrid>();
 	ClassDB::register_class<MChunkGenerator>();
 	ClassDB::register_class<MChunks>();
+	ClassDB::register_class<MRegion>();
 	ClassDB::register_class<MRaw16>();
 }
 

@@ -1,0 +1,73 @@
+[gd_resource type="Shader" format=3 uid="uid://bsydpwon6ucck"]
+
+[resource]
+code = "shader_type spatial;
+//render_mode unshaded;
+
+
+uniform sampler2D mterrain_1_heightmap:filter_nearest;
+uniform sampler2D mterrain_0_normalmap:filter_nearest;
+uniform float region_size;
+//uniform float region_img_size;
+uniform vec3 region_world_position;
+//uniform sampler2D mterrain_0_splatmap;
+varying vec2 terrain_heightmap_uv;
+varying vec2 terrain_splatmap_uv;
+varying vec2 terrain_uv;
+varying float foo;
+void vertex(){
+	float region_img_size = float(textureSize(mterrain_1_heightmap,0).x);
+	terrain_splatmap_uv = (NODE_POSITION_WORLD - region_world_position + VERTEX).xz/region_size;
+	terrain_heightmap_uv = terrain_splatmap_uv*(region_img_size-1.0)/region_img_size +0.5/region_img_size;
+	float h = texture(mterrain_1_heightmap, terrain_heightmap_uv).r;
+	h *= 2600.0;
+	VERTEX.y += h - 500.0;
+	vec3 n = texture(mterrain_0_normalmap, terrain_heightmap_uv).xzy;
+	n = n*2.0 - 1.0;
+	n.z *= -1.0;
+	foo = n.z;
+	NORMAL = n;
+}
+
+void fragment() {
+	vec3 n = texture(mterrain_0_normalmap, terrain_heightmap_uv).xzy;
+	n = n*2.0 - 1.0;
+	n.z *= -1.0;
+	mat3 t = mat3(TANGENT, NORMAL, BINORMAL);
+	//NORMAL = t*n;
+	//ALBEDO = vec3(0.5);
+	//ALBEDO = texture(mterrain_0_normalmap, terrain_heightmap_uv).rgb;
+	ALBEDO = vec3(texture(mterrain_1_heightmap, terrain_heightmap_uv).r);
+	ALBEDO += vec3(0.0, terrain_heightmap_uv/8.0);
+	/*
+	vec3 splatmap = texture(splatmap_tex, terrain_uv).rgb;
+	splatmap.r = smoothstep(0.8,0.81,splatmap.r);
+	splatmap.g = smoothstep(0.1,0.3,splatmap.g);
+	splatmap.b = smoothstep(0.8,1.0,splatmap.b);
+	ALBEDO = texture(tex0_albedo,tex_uv).rgb;
+	ROUGHNESS = texture(tex0_roughness,tex_uv).r;
+	AO = texture(tex1_ao,tex_uv).r;
+	NORMAL_MAP = texture(tex0_normalmap,tex_uv).rgb;
+	//tex1
+	ALBEDO = mix(ALBEDO,texture(tex1_albedo,tex_uv).rgb, splatmap.r);
+	ROUGHNESS = mix(ROUGHNESS,texture(tex1_roughness,tex_uv).r, splatmap.r)*1.5;
+	SPECULAR = 0.1;
+	AO = mix(AO,texture(tex1_ao,tex_uv).r,splatmap.r);
+	NORMAL_MAP = mix(NORMAL_MAP,texture(tex1_normalmap,tex_uv).xyz,splatmap.r);
+	//tex2
+	ALBEDO = mix(ALBEDO,texture(tex2_albedo,tex_uv).rgb*0.5, splatmap.g);
+	ROUGHNESS = mix(ROUGHNESS,texture(tex2_roughness,tex_uv).r, splatmap.r)*1.5;
+	SPECULAR = 0.1;
+	AO = mix(AO,texture(tex1_ao,tex_uv).r,splatmap.g);
+	NORMAL_MAP = mix(NORMAL_MAP,texture(tex2_normalmap,tex_uv).xyz,splatmap.g);
+	NORMAL_MAP_DEPTH = 2.0;
+	//tex2
+	ALBEDO = mix(ALBEDO,texture(tex3_albedo,tex_uv).rgb*0.5, splatmap.b);
+	ROUGHNESS = mix(ROUGHNESS,texture(tex3_roughness,tex_uv).r, splatmap.r)*1.5;
+	SPECULAR = 0.1;
+	AO = mix(AO,texture(tex3_ao,tex_uv).r,splatmap.b);
+	NORMAL_MAP = mix(NORMAL_MAP,texture(tex3_normalmap,tex_uv).xyz,splatmap.b);
+	NORMAL_MAP_DEPTH = 2.0;
+	*/
+}
+"

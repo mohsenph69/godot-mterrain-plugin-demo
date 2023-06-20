@@ -1,6 +1,9 @@
 #include "mgrid.h"
 
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/shader.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/texture2d.hpp>
 #include <iostream>
 
 
@@ -20,13 +23,13 @@ void MGrid::clear() {
                     points[z][x].instance = RID();
                     points[z][x].mesh = RID();
                 }
-
             }
         }
         for(int32_t z=0; z <_size.z; z++){
                 memdelete_arr<MPoint>(points[z]);
             }
             memdelete_arr<MPoint*>(points);
+            memdelete_arr<MRegion>(regions);
     }
     _size.x = 0;
     _size.y = 0;
@@ -51,16 +54,128 @@ void MGrid::set_scenario(RID scenario){
 
 void MGrid::create(const int32_t& width,const int32_t& height, MChunks* chunks) {
     if (width == 0 || height == 0) return;
+    UtilityFunctions::print("Size of point ", sizeof(MPoint));
     _chunks = chunks;
     _size.x = width;
     _size.z = height;
+    _size_meter.x = width*_chunks->base_size_meter;
+    _size_meter.z = height*_chunks->base_size_meter;
+    _vertex_size.x = (_size_meter.x/chunks->h_scale) + 1;
+    _vertex_size.z = (_size_meter.z/chunks->h_scale) + 1;
+    _region_grid_size.x = _size.x/region_size + _size.x%region_size;
+    _region_grid_size.z = _size.z/region_size + _size.z%region_size;
+    _regions_count = _region_grid_size.x*_region_grid_size.z;
+    _region_size_meter = region_size*_chunks->base_size_meter;
     _grid_bound = MBound(0,width-1, 0, height-1);
-    UtilityFunctions::print("creating ", width);
+    regions = memnew_arr(MRegion, _regions_count);
     points = memnew_arr(MPoint*, _size.z);
     for (int32_t z=0; z<_size.z; z++){
         points[z] = memnew_arr(MPoint, _size.x);
     }
+    //Init Regions
+    int index = 0;
+    for(int32_t z=0; z<_region_grid_size.z; z++){
+        for(int32_t x=0; x<_region_grid_size.x; x++){
+            //UtilityFunctions::print("create region ");
+            regions[index].pos = MGridPos(x,0,z);
+            regions[index].world_pos = get_world_pos(x*region_size,0,z*region_size);
+            regions[index].region_size_meter = region_size*_chunks->base_size_meter;
+            if(x!=0){
+                regions[index].left = get_region(x-1,z);
+            }
+            if(x!=_region_grid_size.x-1){
+                regions[index].right = get_region(x+1,z);
+            }
+            if(z!=0){
+                regions[index].top = get_region(x,z-1);
+            }
+            if(z!=_region_grid_size.z-1){
+                regions[index].bottom = get_region(x,z+1);
+            }
+            if(_material.is_valid()){
+                regions[index].set_material(_material->duplicate());
+            }
+            index++;
+        }
+    }
     is_dirty = true;
+}
+
+void MGrid::update_regions_uniforms(Dictionary input) {
+    UtilityFunctions::print("updating regions");
+    Array uniforms = input.keys();
+    for(int i=0;i<uniforms.size();i++){
+        String uniform = uniforms[i];
+        StringName path = input[uniform];
+        //Later Here we should call another function if these images are in different files
+        //OR in another word they are tiled
+        update_region_no_tiles(uniform, path);
+    }
+}
+
+void MGrid::update_region_no_tiles(const String& unifrom, const StringName& path) {
+    ResourceLoader* rl = ResourceLoader::get_singleton();
+    String spath = String(path);
+    if(!rl->exists(spath)){
+        ERR_FAIL_COND("File does not exist");
+    }
+    Ref<Image> img;
+    Ref<Resource> res = rl->load(spath);
+    if(res->is_class("Image")){
+        img = res;
+    } else if (res->is_class("Texture2D"))
+    {
+        Ref<Texture2D> tex = res;
+        img = tex->get_image();
+    } else {
+        ERR_FAIL_COND("Unknown File Format MTerrain accept only Image and Texture2D class");
+    }
+    // Add one because we start pixels from zero
+    Vector2i size = img->get_size();
+    bool is_vertex_size = true;
+    Vector2i region_img_size(_region_size_meter/_chunks->h_scale,_region_size_meter/_chunks->h_scale);
+    int32_t region_offset = region_img_size.x;
+    //In case image size match _vertex_size they have a common vertex
+    //And code down here is for that
+    //And if it is one less that that it used for thing like splatkmap and
+    //they don' have a common vertex
+    UtilityFunctions::print("image size ", size);
+    UtilityFunctions::print("vertex_size size ", _vertex_size.x);
+    if(size.x == _vertex_size.x && size.y == _vertex_size.z){
+        region_img_size += Vector2(1,1);
+    } else if (size.x == _vertex_size.x - 1 && size.y == _vertex_size.z - 1)
+    {
+        is_vertex_size = false;
+    } else {
+        ERR_FAIL_COND("Image size does not match terrain vertex size");
+    }
+    if(size.x != size.y){
+        ERR_FAIL_COND("width and height of images should be equale to use in MTerrain plugin");
+    }
+    UtilityFunctions::print(region_img_size);
+    bool is_odd = size.x%2 != 0;
+    int index = 0;
+    for(int32_t z=0; z<_region_grid_size.z; z++){
+        for(int32_t x=0; x<_region_grid_size.x; x++){
+            MRegion* region = regions + index;
+            Vector2i pos(x,z);
+            pos *= region_offset;
+            //pos *= region_size*4;
+            Rect2i rect(pos, Vector2i(region_img_size));
+            UtilityFunctions::print(rect);
+            Ref<Image> region_img = img->get_region(rect);
+            MImageInfo* info = memnew(MImageInfo);
+            info->uniform = unifrom;
+            info->format = region_img->get_format();
+            info->size = region_img->get_size().x;
+            info->image = region_img->get_data();
+            region->set_image_info(info);
+            index++;
+        }
+    }
+    for(int i=0; i < _regions_count; i++){
+        //regions[i].update_region();
+    }
 }
 
 
@@ -80,6 +195,20 @@ MGridPos MGrid::get_grid_pos(const Vector3& pos) {
     p.z = ((int32_t)(rp.z))/_chunks->base_size_meter;
     
     return p;
+}
+
+int32_t MGrid::get_region_id_by_point(const int32_t &x, const int32_t& z) {
+    return x/region_size + (z/region_size)*_region_grid_size.x;
+}
+
+MRegion* MGrid::get_region_by_point(const int32_t &x, const int32_t& z){
+    int32_t id = x/region_size + (z/region_size)*_region_grid_size.x;
+    return regions + id;
+}
+
+MRegion* MGrid::get_region(const int32_t &x, const int32_t& z){
+    int32_t id = x + z*_region_grid_size.x;
+    return regions + id;
 }
 
 
@@ -150,10 +279,12 @@ void MGrid::update_lods() {
         for(int32_t z =m.top; z <= m.bottom; z++){
             for(int32_t x=m.left; x <= m.right; x++){
                 points[z][x].lod = current_lod;
+                get_region_by_point(x,z)->insert_lod(current_lod);
             }
         }
     } else {
         points[m.center.z][m.center.x].lod = current_lod;
+        get_region_by_point(m.center.x,m.center.z)->insert_lod(current_lod);
     }
     while (m.grow(_search_bound,1,1))
     {
@@ -177,21 +308,25 @@ void MGrid::update_lods() {
         if(m.grow_left){
             for(int32_t z=m.top; z<=m.bottom;z++){
                 points[z][m.left].lod = l;
+                get_region_by_point(m.left,z)->insert_lod(l);
             }
         }
         if(m.grow_right){
             for(int32_t z=m.top; z<=m.bottom;z++){
                 points[z][m.right].lod = l;
+                get_region_by_point(m.right,z)->insert_lod(l);
             }
         }
         if(m.grow_top){
             for(int32_t x=m.left; x<=m.right; x++){
                 points[m.top][x].lod = l;
+                get_region_by_point(x,m.top)->insert_lod(l);
             }
         }
         if(m.grow_bottom){
             for(int32_t x=m.left; x<=m.right; x++){
                 points[m.bottom][x].lod = l;
+                get_region_by_point(x,m.bottom)->insert_lod(l);
             }
         }
     }
@@ -200,10 +335,14 @@ void MGrid::update_lods() {
 ///////////////////////////////////////////////////////
 ////////////////// MERGE //////////////////////////////
 void MGrid::merge_chunks() {
+    for(int i=0; i < _regions_count; i++){
+        regions[i].update_region();
+    }
     for(int32_t z=_search_bound.top; z<=_search_bound.bottom; z++){
         for(int32_t x=_search_bound.left; x<=_search_bound.right; x++){
             int8_t lod = points[z][x].lod;
             MBound mb(x,z);
+            int32_t region_id = get_region_id_by_point(x,z);
             #ifdef NO_MERGE
             check_bigger_size(lod,0, mb);
             num_chunks +=1;
@@ -212,7 +351,7 @@ void MGrid::merge_chunks() {
                 if(_chunks->sizes[s].lods[lod].meshes.size()){
                     MBound test_bound = mb;
                     if(test_bound.grow_positive(pow(2,s) - 1, _search_bound)){
-                        if(check_bigger_size(lod,s, test_bound)){
+                        if(check_bigger_size(lod,s,region_id, test_bound)){
                             num_chunks +=1;
                             break;
                         }
@@ -230,10 +369,10 @@ void MGrid::merge_chunks() {
 // Also if All condition are correct then we can merge to bigger size
 // So this will set the size of all points except the first one to -1
 // Also Here we should detrmine the edge of each mesh
-bool MGrid::check_bigger_size(const int8_t& lod,const int8_t& size, const MBound& bound) {
+bool MGrid::check_bigger_size(const int8_t& lod,const int8_t& size,const int32_t& region_id, const MBound& bound) {
     for(int32_t z=bound.top; z<=bound.bottom; z++){
         for(int32_t x=bound.left; x<=bound.right; x++){
-            if (points[z][x].lod != lod || points[z][x].size == -1)
+            if (points[z][x].lod != lod || points[z][x].size == -1 || get_region_id_by_point(x,z) != region_id)
             {
                 return false;
             }
@@ -308,7 +447,9 @@ bool MGrid::check_bigger_size(const int8_t& lod,const int8_t& size, const MBound
                         remove_instance_list.append(points[z][x].instance);
                         points[z][x].instance = RID(); 
                     }
-                    points[z][x].create_instance(get_world_pos(x,0,z), _scenario, _material);
+                    MRegion* region = get_region_by_point(x,z);
+                    region->insert_lod(lod);
+                    points[z][x].create_instance(get_world_pos(x,0,z), _scenario, region->get_material_rid());
                     rs->instance_set_visible(points[z][x].instance, false);
                     rs->instance_set_base(points[z][x].instance, mesh);
                     update_mesh_list.append(points[z][x].instance);
@@ -364,6 +505,9 @@ int8_t MGrid::get_edge_num(const bool& left,const bool& right,const bool& top,co
 
 
 void MGrid::update_meshes() {
+    for(int i=0; i < _regions_count; i++){
+        regions[i].apply_update();
+    }
     RenderingServer* rs = RenderingServer::get_singleton();
     for(RID rm: remove_instance_list){
         rs->free_rid(rm);
@@ -371,17 +515,30 @@ void MGrid::update_meshes() {
     for(RID add : update_mesh_list){
         rs->instance_set_visible(add, true);
     }
-    if(remove_instance_list.size() != 0 || update_mesh_list.size() != 0)
-        UtilityFunctions::print("chunks ", itos(num_chunks), " instance remove ", itos(remove_instance_list.size()), " add ", itos(update_mesh_list.size()));
+    update_count++;
+    total_add+= update_mesh_list.size();
+    total_remove += remove_instance_list.size();
+    total_chunks += num_chunks;
+    if(remove_instance_list.size() != 0 || update_mesh_list.size() != 0){
+        uint64_t a_add = total_add/update_count;
+        uint64_t a_remove = total_remove/update_count;
+        uint64_t a_chunks = total_chunks/update_count;
+        UtilityFunctions::print(
+            "a_add ",a_add,
+            " a_remove ",a_remove,
+            " a_chunks ",a_chunks
+        );
+    }
 }
 
-RID MGrid::get_material() {
+Ref<ShaderMaterial> MGrid::get_material() {
     return _material;
 }
 
 
 
-void MGrid::set_material(RID material) {
+void MGrid::set_material(Ref<ShaderMaterial> material) {
+    /*
     if(is_dirty){
         RenderingServer* rs = RenderingServer::get_singleton();
         for(int32_t z=_search_bound.top; z <=_search_bound.bottom; z++){
@@ -389,10 +546,11 @@ void MGrid::set_material(RID material) {
                 UtilityFunctions::print("HHHHH ");
                 if(points[z][x].has_instance()){
                     RID instance = points[z][x].instance;
-                    rs->instance_geometry_set_material_override(instance, material);
+                    rs->instance_geometry_set_material_override(instance, material->get_rid());
                 }
             }
         }
     }
+    */
     _material = material;
 }

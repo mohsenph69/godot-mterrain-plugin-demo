@@ -48,6 +48,7 @@ class MChunks : public Object {
     #ifdef M_DEBUG
     Vector<Ref<Material>> debug_material;
     #endif
+    real_t h_scale;
     int32_t base_size_meter;
     int8_t max_lod;
     int8_t max_size;

@@ -4,8 +4,8 @@
 
 
 void MRaw16::_bind_methods() {
-   ClassDB::bind_static_method("MRaw16", D_METHOD("get_image","file_path","width","height"), &MRaw16::get_image);
-   ClassDB::bind_static_method("MRaw16", D_METHOD("get_texture","file_path","width","height"), &MRaw16::get_texture); 
+   ClassDB::bind_static_method("MRaw16", D_METHOD("get_image","file_path","width","height","is_half"), &MRaw16::get_image);
+   ClassDB::bind_static_method("MRaw16", D_METHOD("get_texture","file_path","width","height","is_half"), &MRaw16::get_texture); 
 }
 
 
@@ -18,7 +18,7 @@ MRaw16::~MRaw16()
 }
 
 
-Ref<Image> MRaw16::get_image(const String& file_path, const uint64_t& width, const uint64_t& height) {
+Ref<Image> MRaw16::get_image(const String& file_path, const uint64_t& width, const uint64_t& height,const bool& is_half) {
     Ref<Image> img;
     UtilityFunctions::print("open: ", file_path);
     if(!FileAccess::file_exists(file_path)){
@@ -43,22 +43,31 @@ Ref<Image> MRaw16::get_image(const String& file_path, const uint64_t& width, con
             ERR_FAIL_COND_V("Image width or height is not valid", img);
         }
     }
-    PackedByteArray data;
-    data.resize(size);
-    uint64_t offset = 0;
-    for(int i = 0; i<size16; i++){
-        double p = (double)file->get_16()/65535;
-        data.encode_half(offset, p);
-        offset += 2;
+    if(is_half){
+        PackedByteArray data;
+        data.resize(size);
+        uint64_t offset = 0;
+        for(int i = 0; i<size16; i++){
+            double p = (double)file->get_16()/65535;
+            data.encode_half(offset, p);
+            offset += 2;
+        }
+        img = Image::create_from_data(final_width,final_height,false, Image::FORMAT_RH, data);
+    } else {
+        PackedFloat32Array dataf;
+        for(int i = 0; i<size16; i++){
+            double p = (double)file->get_16()/65535;
+            dataf.append(p);
+        }
+        img = Image::create_from_data(final_width,final_height,false, Image::FORMAT_RF, dataf.to_byte_array());
     }
-    img = Image::create_from_data(final_width,final_height,false, Image::FORMAT_RH, data);
     return img;
 }
 
 
 
-Ref<ImageTexture> MRaw16::get_texture(const String& file_path, const uint64_t& width, const uint64_t& height){
-    Ref<Image> img = MRaw16::get_image(file_path, width, height);
+Ref<ImageTexture> MRaw16::get_texture(const String& file_path, const uint64_t& width, const uint64_t& height,const bool& is_half){
+    Ref<Image> img = MRaw16::get_image(file_path, width, height,is_half);
     Ref<ImageTexture> tex;
     if(img.is_valid()){
         tex = ImageTexture::create_from_image(img);

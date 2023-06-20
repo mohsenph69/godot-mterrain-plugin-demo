@@ -14,3 +14,4 @@ dest_files=["res://.godot/imported/hf.r16-6f18ddb2d09b5cb748135822a98e434a.res"]
 
 width=0
 height=0
+is_half_float=false

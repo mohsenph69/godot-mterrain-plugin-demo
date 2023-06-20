@@ -4,6 +4,7 @@
 
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/rect2i.hpp>
 
 #include "mconfig.h"
 
@@ -40,12 +41,14 @@ struct  MBound
     bool grow_right = true;
     bool grow_top = true;
     bool grow_bottom = true;
+    MGridPos cursor;
 
     MBound();
     MBound(const int32_t& _left,const int32_t& _right,const int32_t& _top,const int32_t& _bottom);
     MBound(const MGridPos& pos,const int32_t& radius, const MGridPos& gird_size);
     MBound(const MGridPos& pos);
     MBound(const int32_t& x,const int32_t& z);
+    Rect2i get_rect2i();
     
     void clear();
     bool has_point(const int32_t& x, const int32_t& y);
@@ -63,6 +66,9 @@ struct  MBound
     MGridPos get_edge_point();
 
     bool grow_positive(const int32_t& amount, const MBound& limit_bound);
+    //use to devide the image to different region
+    bool get_next_region(const int32_t& region_size, const MBound& limit_bound);
+    bool get_next_shared_edge_region(const int32_t& region_size, const MBound& limit_bound);
 
 
 };
