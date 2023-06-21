@@ -1,6 +1,5 @@
 # godot-mterrain-plugin-demo
 ## Please do not use this in real project yet, Just for testing
-### right now github deleted some huge file including heightmap and this project not working, I will make it correct later
 Just a demo for my terrain and please test this but do not use this in your project yet do that if you know what you are doing
 
 Video explain about how to use this:

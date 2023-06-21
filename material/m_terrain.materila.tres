@@ -1,9 +1,9 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://nwreip4ma8t4"]
 
-[ext_resource type="Shader" uid="uid://bsydpwon6ucck" path="res://material/fshader.tres" id="1_cdc3x"]
+[ext_resource type="Shader" uid="uid://bugukljf0gyyc" path="res://fshader.tres" id="1_f8gvx"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_cdc3x")
-shader_parameter/region_size = null
+shader = ExtResource("1_f8gvx")
+shader_parameter/region_size = 1024.0
 shader_parameter/region_world_position = null

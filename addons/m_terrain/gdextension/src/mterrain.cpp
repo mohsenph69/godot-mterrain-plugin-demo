@@ -116,7 +116,7 @@ void MTerrain::create_grid(){
     grid->update_regions_uniforms(uniforms);
     get_update_remove_chunks();
     grid->update_meshes();
-    continue_update();
+    //continue_update();
     UtilityFunctions::print("Chunks has been created ");
 }
 

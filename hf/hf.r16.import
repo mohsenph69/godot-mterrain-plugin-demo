@@ -1,7 +1,7 @@
 [remap]
 
-importer="mterrain.raw16.tex"
-type="ImageTexture"
+importer="mterrain.raw16.img"
+type="Image"
 uid="uid://dp8txnadlkms0"
 path="res://.godot/imported/hf.r16-6f18ddb2d09b5cb748135822a98e434a.res"
 

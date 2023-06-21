@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://MTerrain.gd" id="1_6w82v"]
 [ext_resource type="Script" path="res://free_look_camera.gd" id="1_65a37"]
 [ext_resource type="Shader" path="res://world.gdshader" id="1_a7bgu"]
-[ext_resource type="Material" uid="uid://nwreip4ma8t4" path="res://material/m_terrain.materila.tres" id="1_gu0n0"]
+[ext_resource type="Material" uid="uid://nwreip4ma8t4" path="res://material/m_terrain.materila.tres" id="1_uo4gq"]
 [ext_resource type="Texture2D" uid="uid://djis6uurdvrmf" path="res://asset/belfast_sunset_puresky_4k.exr" id="4_xtdfy"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_e6bbl"]
@@ -68,6 +68,7 @@ size = Vector3(32, 1, 1)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yvc4s"]
 render_priority = 0
 shader = ExtResource("1_a7bgu")
+shader_parameter/color = null
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_epa4v"]
 size = Vector2(64, 64)
@@ -76,7 +77,7 @@ center_offset = Vector3(32, 0, 32)
 [node name="world" type="Node3D"]
 
 [node name="MTerrain" type="MTerrain" parent="."]
-material = ExtResource("1_gu0n0")
+material = ExtResource("1_uo4gq")
 terrain_size = Vector2i(256, 256)
 region_size = 32
 max_range = 1024
