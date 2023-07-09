@@ -1,4 +1,4 @@
-# Everythinh has been moved to this repo
+# Everything has been moved to this repo
 https://github.com/mohsenph69/Godot-MTerrain-plugin
 # godot-mterrain-plugin-demo
 ## Please do not use this in real project yet, Just for testing
